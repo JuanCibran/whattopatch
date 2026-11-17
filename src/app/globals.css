@@ -1,0 +1,280 @@
+@import "tailwindcss";
+
+/*
+  WhatToPatch design tokens.
+  The page borrows from medical triage tags: cool form paper, ink, and three tear-off
+  colors that carry the urgency. Ballpoint blue marks everything you can interact with.
+*/
+@theme {
+  --color-paper: #edf1f5;
+  --color-sheet: #fbfcfd;
+  --color-ink: #17223b;
+  --color-graphite: #566179;
+  --color-rule: #c8d1dd;
+  --color-ballpoint: #2446c7;
+  --color-now: #c8202f;
+  --color-soon: #f2b705;
+  --color-watch: #1d7a4e;
+}
+
+@theme inline {
+  --font-display: var(--font-big-shoulders), "Arial Narrow", sans-serif;
+  --font-sans: var(--font-atkinson), "Segoe UI", system-ui, sans-serif;
+}
+
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+
+  html {
+    background: var(--color-paper);
+    color: var(--color-ink);
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    font-family: var(--font-sans);
+    font-size: 1.0625rem;
+    line-height: 1.55;
+    font-variant-numeric: tabular-nums;
+  }
+
+  ::selection {
+    background: color-mix(in oklab, var(--color-ballpoint) 22%, transparent);
+  }
+
+  a {
+    color: var(--color-ballpoint);
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.18em;
+  }
+
+  a:hover {
+    text-decoration-thickness: 2px;
+  }
+
+  :focus-visible {
+    outline: 3px solid var(--color-ballpoint);
+    outline-offset: 2px;
+    border-radius: 3px;
+  }
+}
+
+@layer components {
+  .display {
+    font-family: var(--font-display);
+    font-weight: 800;
+    line-height: 0.92;
+    letter-spacing: 0.005em;
+  }
+
+  .section-title {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 2.25rem;
+    line-height: 1;
+  }
+
+  .tier-now {
+    --tier: var(--color-now);
+  }
+  .tier-soon {
+    --tier: var(--color-soon);
+  }
+  .tier-watch {
+    --tier: var(--color-watch);
+  }
+
+  /* A triage tag: colored tear-off strip, a punched hole, a perforation line, then the card. */
+  .tag {
+    position: relative;
+    display: grid;
+    grid-template-columns: 14px minmax(0, 1fr);
+    background: var(--color-sheet);
+    border: 1px solid var(--color-rule);
+    border-radius: 4px 10px 10px 4px;
+  }
+
+  .tag-strip {
+    position: relative;
+    background: var(--tier, var(--color-graphite));
+    border-radius: 3px 0 0 3px;
+  }
+
+  .tag-strip::after {
+    content: "";
+    position: absolute;
+    top: 12px;
+    left: 50%;
+    width: 6px;
+    height: 6px;
+    margin-left: -3px;
+    border-radius: 50%;
+    background: var(--color-paper);
+    box-shadow: inset 0 1px 1px rgb(23 34 59 / 0.35);
+  }
+
+  .tag-body {
+    padding: 14px 16px 14px 18px;
+    background-image: repeating-linear-gradient(
+      to bottom,
+      var(--color-rule) 0 4px,
+      transparent 4px 8px
+    );
+    background-size: 1px 100%;
+    background-repeat: no-repeat;
+    background-position: 4px 0;
+  }
+
+  .tag.is-mine {
+    border-color: var(--color-ballpoint);
+    box-shadow: 0 0 0 1px var(--color-ballpoint);
+  }
+
+  .fact {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.3em;
+    font-size: 0.875rem;
+    color: var(--color-graphite);
+    white-space: nowrap;
+  }
+
+  .fact strong {
+    color: var(--color-ink);
+    font-weight: 700;
+  }
+
+  .flag {
+    display: inline-flex;
+    align-items: center;
+    font-size: 0.8125rem;
+    font-weight: 700;
+    line-height: 1;
+    padding: 4px 8px;
+    border-radius: 999px;
+    border: 1.5px solid currentColor;
+    white-space: nowrap;
+  }
+
+  .flag-now {
+    color: var(--color-now);
+  }
+  .flag-ransom {
+    color: #fff;
+    background: var(--color-now);
+    border-color: var(--color-now);
+  }
+  .flag-mine {
+    color: var(--color-ballpoint);
+  }
+  .flag-new {
+    color: var(--color-ink);
+    background: var(--color-soon);
+    border-color: var(--color-soon);
+  }
+
+  .todo > summary {
+    list-style: none;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5em;
+    font-weight: 700;
+    color: var(--color-ballpoint);
+    padding: 4px 0;
+  }
+
+  .todo > summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .todo > summary::before {
+    content: "+";
+    display: inline-grid;
+    place-items: center;
+    width: 1.25em;
+    height: 1.25em;
+    border: 1.5px solid currentColor;
+    border-radius: 4px;
+    font-size: 0.95em;
+    line-height: 1;
+  }
+
+  .todo[open] > summary::before {
+    content: "−";
+  }
+
+  .steps {
+    counter-reset: step;
+    display: grid;
+    gap: 10px;
+    margin-top: 8px;
+  }
+
+  .steps > li {
+    counter-increment: step;
+    display: grid;
+    grid-template-columns: 1.75rem minmax(0, 1fr);
+    column-gap: 10px;
+  }
+
+  .steps > li::before {
+    content: counter(step);
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 1.5rem;
+    line-height: 1.05;
+    color: var(--tier, var(--color-ink));
+    text-align: right;
+  }
+
+  .tier-soon .steps > li::before {
+    color: #9a7400;
+  }
+
+  .rule-top {
+    border-top: 1px solid var(--color-rule);
+  }
+
+  .button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4em;
+    font: inherit;
+    font-size: 0.9375rem;
+    font-weight: 700;
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: 1.5px solid var(--color-ballpoint);
+    color: var(--color-ballpoint);
+    background: transparent;
+    cursor: pointer;
+  }
+
+  .button:hover {
+    background: color-mix(in oklab, var(--color-ballpoint) 8%, transparent);
+  }
+
+  .button-quiet {
+    border-color: var(--color-rule);
+    color: var(--color-ink);
+  }
+}
+
+/* The one orchestrated moment: the hero tag's strip tears in on load. */
+@media (prefers-reduced-motion: no-preference) {
+  .hero-tag .tag-strip {
+    animation: strip-in 700ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+    transform-origin: top;
+  }
+  @keyframes strip-in {
+    from {
+      transform: scaleY(0);
+    }
+    to {
+      transform: scaleY(1);
+    }
+  }
+}
