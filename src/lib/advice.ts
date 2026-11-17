@@ -68,7 +68,7 @@ function fixedPhrase(fixed: string[]): string | null {
 }
 
 function patchDetail(input: AdviceInput, when: string): string {
-  const vendor = input.vendor || "the vendor";
+  const vendor = (input.vendor || "the vendor").replace(/\.+$/, "");
   const multiple = /multiple products/i.test(input.product);
   const target = multiple ? "" : productName(input.vendor, input.product);
   const fixed = fixedPhrase(input.fixed);
