@@ -30,7 +30,7 @@ export function ItemTag({ item, asOf, mine = false, variant = "list", open = fal
       <div className="tag-strip" aria-hidden="true" />
       <div className={`tag-body ${isHero ? "sm:px-7 sm:py-6" : ""}`}>
         <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-1">
-          <p className={`font-bold text-graphite ${isHero ? "text-base" : "text-[0.9375rem]"}`}>{vendorLine || "Unknown product"}</p>
+          <p className={`font-bold text-graphite ${isHero ? "text-base" : "text-[0.9375rem]"}`}>{vendorLine}</p>
           <div className="flex flex-wrap gap-1.5">
             {isNew ? <span className="flag flag-new">New</span> : null}
             {mine ? <span className="flag flag-mine">In your stack</span> : null}

@@ -84,6 +84,34 @@ describe("items and advice", () => {
   });
 });
 
+describe("advice wording on real records", () => {
+  it("names the product people know and keeps brand casing", () => {
+    const record = parseCveRecord(fixture("CVE-2026-46300.json"));
+    const item = buildItem({ cve: record.id, record, asOf });
+    expect(item.vendor).toBe("Linux");
+    expect(item.advice.steps[0].detail).toMatch(/update Linux to 7\.1, 7\.0\.10 or 6\.18\.33 or later/);
+    const apple = buildItem({
+      cve: "CVE-2024-27834",
+      kev: { cve: "CVE-2024-27834", vendor: "Apple", product: "Multiple Products", name: "Apple Multiple Products Improper Authentication Vulnerability", added: "2026-11-04", due: "2026-11-18", ransomware: false, forensic: false, description: "", advisories: ["https://support.apple.com/en-us/120896"], cwes: [] },
+      asOf,
+    });
+    expect(apple.advice.steps[0].detail).toBe("Today, install the fix from Apple. The vendor advisory lists the fixed versions.");
+    expect(apple.advice.steps.some((s) => s.detail.startsWith("iPhone and iPad"))).toBe(true);
+  });
+
+  it("treats n/a vendors as unknown and labels non-vendor links honestly", () => {
+    const item = buildItem({
+      cve: "CVE-2023-38646",
+      record: { ...parseCveRecord(fixture("CVE-2024-3400.json")), vendor: "n/a", product: "n/a", references: [{ url: "https://example.com/writeup", tags: [], name: null }] },
+      extraEvidence: ["circl-exploited"],
+      asOf,
+    });
+    expect(item.vendor).toBe("");
+    expect(item.advice.steps[0].hrefLabel).toBe("Details");
+    expect(item.advice.steps[0].detail).not.toContain("n/a");
+  });
+});
+
 describe("categories", () => {
   it("recognizes edge devices, browsers and Apple", () => {
     expect(categoryOf(matchText("Fortinet", "FortiOS", "FortiOS SSL-VPN overflow"))).toBe("edge");

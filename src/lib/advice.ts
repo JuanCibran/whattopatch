@@ -1,4 +1,4 @@
-import { fmtDate, fmtPercentile, fmtProbability, orList } from "./format";
+import { fmtDate, fmtPercentile, fmtProbability, orList, productName } from "./format";
 import { daysBetween } from "./parsers/util";
 import type { Category } from "./triage";
 import type { Advice, AdviceStep, Cvss, Epss, Evidence, KevInfo, Ssvc, Tier } from "./types";
@@ -15,6 +15,8 @@ export type AdviceInput = {
   product: string;
   fixed: string[];
   advisory: string | null;
+  /** True when the link comes from the vendor (KEV notes or a vendor-advisory reference). */
+  advisoryIsVendor?: boolean;
   /** When the advice is generated; used to phrase deadlines. */
   asOf: string;
 };
@@ -66,14 +68,14 @@ function fixedPhrase(fixed: string[]): string | null {
 }
 
 function patchDetail(input: AdviceInput, when: string): string {
-  const target = input.product || "the affected product";
+  const vendor = input.vendor || "the vendor";
+  const multiple = /multiple products/i.test(input.product);
+  const target = multiple ? "" : productName(input.vendor, input.product);
   const fixed = fixedPhrase(input.fixed);
-  if (fixed) return `${when} update ${target} to ${fixed}.`;
-  return `${when} install the fix from ${input.vendor || "the vendor"}. The vendor advisory lists the fixed versions.`;
-}
-
-function capitalize(s: string): string {
-  return s.charAt(0).toUpperCase() + s.slice(1);
+  if (fixed && target) return `${when} update ${target} to ${fixed}.`;
+  if (fixed) return `${when} install ${vendor}'s update: ${fixed}.`;
+  const where = input.advisory && input.advisoryIsVendor ? "The vendor advisory lists" : "Check the vendor's site for";
+  return `${when} install the fix from ${vendor}. ${where} the fixed versions.`;
 }
 
 export function whyLine(input: AdviceInput): string {
@@ -108,7 +110,9 @@ export function whyLine(input: AdviceInput): string {
 
 export function buildAdvice(input: AdviceInput): Advice {
   const steps: AdviceStep[] = [];
-  const vendorLink = input.advisory ? { href: input.advisory, hrefLabel: "Vendor advisory" } : {};
+  const vendorLink = input.advisory
+    ? { href: input.advisory, hrefLabel: input.advisoryIsVendor ? "Vendor advisory" : "Details" }
+    : {};
 
   if (input.tier === "now") {
     const urgent = Boolean(input.kev?.forensic) || (input.kev ? daysBetween(input.kev.added, input.kev.due) <= 3 : false);
@@ -145,6 +149,5 @@ export function buildAdvice(input: AdviceInput): Advice {
     });
   }
 
-  for (const step of steps) step.detail = capitalize(step.detail);
   return { why: whyLine(input), steps };
 }

@@ -70,6 +70,17 @@ describe("CVE records", () => {
   });
 });
 
+describe("Linux kernel records", () => {
+  it("uses per-branch fixed releases and ignores git commit IDs", () => {
+    const r = parseCveRecord(fixture("CVE-2026-46300.json"));
+    const fixed = r.affected.flatMap((a) => a.fixed);
+    expect(fixed).toContain("7.0.10");
+    expect(fixed).toContain("6.6.141");
+    expect(fixed.some((v) => /^[0-9a-f]{12,}$/.test(v))).toBe(false);
+    expect(r.affected.flatMap((a) => a.ranges)).toContain("3.9 and later");
+  });
+});
+
 describe("versions", () => {
   it("orders hotfix suffixes and multi-digit parts naturally", () => {
     expect(compareVersions("10.2.10", "10.2.9-h1")).toBeGreaterThan(0);

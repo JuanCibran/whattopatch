@@ -9,6 +9,7 @@ export type AffectedSummary = {
 
 type VersionEntry = {
   version?: unknown;
+  versionType?: unknown;
   status?: unknown;
   lessThan?: unknown;
   lessThanOrEqual?: unknown;
@@ -23,6 +24,8 @@ type AffectedEntry = {
 };
 
 export function isVersionLike(value: string): boolean {
+  // Git commit IDs (the Linux kernel CNA uses them) are not something a person can upgrade to.
+  if (/^[0-9a-f]{12,}$/i.test(value)) return false;
   return /\d/.test(value) && !/[*\s]/.test(value) && value.length <= 40;
 }
 
@@ -59,7 +62,17 @@ export function summarizeAffected(affected: unknown): AffectedSummary[] {
     if (!product) continue;
     const ranges: string[] = [];
     const fixed = new Set<string>();
+    const defaultAffected = text(entry.defaultStatus) === "affected";
     for (const v of entry.versions ?? []) {
+      if (text(v.versionType) === "git") continue;
+      if (text(v.status) === "unaffected") {
+        // "6.6.141 <= 6.6.*" marks the first fixed release of a branch (Linux kernel style).
+        const upper = text(v.lessThanOrEqual) || text(v.lessThan);
+        const version = text(v.version);
+        const branchFix = upper.endsWith("*") || text(v.versionType) === "original_commit_for_fix";
+        if (defaultAffected && branchFix && version !== "0" && isVersionLike(version)) fixed.add(version);
+        continue;
+      }
       if (text(v.status) !== "affected") continue;
       const from = text(v.version);
       const below = text(v.lessThan);
@@ -73,7 +86,7 @@ export function summarizeAffected(affected: unknown): AffectedSummary[] {
       } else if (below || through) {
         ranges.push(openStart ? "All versions" : `${from} and later`);
       } else if (from && !openStart) {
-        ranges.push(from);
+        ranges.push(defaultAffected ? `${from} and later` : from);
       }
       for (const change of v.changes ?? []) {
         const at = text(change.at);

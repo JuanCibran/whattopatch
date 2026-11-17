@@ -21,8 +21,8 @@ export type ItemInput = {
 /** Combines everything we know about one vulnerability into a ranked item with advice. */
 export function buildItem(input: ItemInput): RadarItem {
   const { kev, record, euvd, asOf } = input;
-  const vendor = kev?.vendor || record?.vendor || euvd?.vendor || "";
-  const product = kev?.product || record?.product || euvd?.product || "";
+  const vendor = clean(kev?.vendor) || clean(record?.vendor) || clean(euvd?.vendor);
+  const product = clean(kev?.product) || clean(record?.product) || clean(euvd?.product);
   const title =
     kev?.name || record?.title || truncate(record?.description || euvd?.description || "Untitled vulnerability", 110);
   const summary = truncate(kev?.description || record?.description || euvd?.description || "", 320);
@@ -41,12 +41,9 @@ export function buildItem(input: ItemInput): RadarItem {
     record?.cvss ??
     (euvd?.score != null ? { score: euvd.score, severity: null, version: euvd.scoreVersion, vector: euvd.vector } : null);
   const fixed = [...new Set((record?.affected ?? []).flatMap((a) => a.fixed))].slice(0, 6);
-  const advisory =
-    kev?.advisories[0] ??
-    record?.references.find((r) => r.tags.includes("vendor-advisory"))?.url ??
-    record?.references[0]?.url ??
-    euvd?.references[0] ??
-    null;
+  const vendorAdvisory =
+    kev?.advisories[0] ?? record?.references.find((r) => r.tags.includes("vendor-advisory"))?.url ?? null;
+  const advisory = vendorAdvisory ?? record?.references[0]?.url ?? euvd?.references[0] ?? null;
 
   const text = matchText(vendor, product, title);
   const category = categoryOf(text);
@@ -94,8 +91,14 @@ export function buildItem(input: ItemInput): RadarItem {
       product,
       fixed,
       advisory,
+      advisoryIsVendor: Boolean(vendorAdvisory),
       asOf,
     }),
     matchText: text,
   };
+}
+
+function clean(value: string | null | undefined): string {
+  const v = (value ?? "").trim();
+  return /^(n\/a|na|unknown|unspecified|-)$/i.test(v) ? "" : v;
 }
